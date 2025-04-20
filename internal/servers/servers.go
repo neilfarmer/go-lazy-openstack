@@ -18,64 +18,168 @@ type Server struct {
 	Networks string
 }
 
-var mockServers = map[string][]Server{
+var mockServers = map[string][]openstack_servers.Server{
 	"admin": {
-		{"web-01-derpify-access-worker-10099-and-stuff-or-something", "123e4567", "ACTIVE", "m1.small", "ubuntu-20.04", "net1=192.168.1.10"},
-		{"db-01", "789a0123", "SHUTOFF", "m1.medium", "ubuntu-18.04", "net1=192.168.1.20"},
-		{"app-01", "456b7890", "ACTIVE", "m1.large", "centos-7", "net1=192.168.1.30"},
-		{"cache-01", "234c5678", "ACTIVE", "m1.small", "alpine-3.16", "net1=192.168.1.40"},
+		{
+			Name: "web-01-derpify-access-worker-10099-and-stuff-or-something",
+			ID: "123e4567", Status: "ACTIVE",
+			Flavor: map[string]interface{}{"flavor": "m1.small"},
+			Image: map[string]interface{}{"image": "ubuntu-20.04"},
+			Addresses: map[string]interface{}{"addresses": "net1=192.168.1.10"},
+		},
+		{
+			Name: "db-01", ID: "789a0123", Status: "SHUTOFF",
+			Flavor: map[string]interface{}{"flavor": "m1.medium"},
+			Image: map[string]interface{}{"image": "ubuntu-18.04"},
+			Addresses: map[string]interface{}{"addresses": "net1=192.168.1.20"},
+		},
+		{
+			Name: "app-01", ID: "456b7890", Status: "ACTIVE",
+			Flavor: map[string]interface{}{"flavor": "m1.large"},
+			Image: map[string]interface{}{"image": "centos-7"},
+			Addresses: map[string]interface{}{"addresses": "net1=192.168.1.30"},
+		},
+		{
+			Name: "cache-01", ID: "234c5678", Status: "ACTIVE",
+			Flavor: map[string]interface{}{"flavor": "m1.small"},
+			Image: map[string]interface{}{"image": "alpine-3.16"},
+			Addresses: map[string]interface{}{"addresses": "net1=192.168.1.40"},
+		},
 	},
 	"dev": {
-		{"proxy-01-nginx-frontend-v2-prod", "345d6789", "BUILD", "m1.medium", "ubuntu-22.04", "net1=192.168.1.50"},
-		{"monitor-01-prometheus-central-collector", "567e8901", "ERROR", "m1.large", "debian-11", "net1=192.168.1.60"},
-		{"worker-02-processing-long-job-handler", "678f9012", "ACTIVE", "m1.xlarge", "ubuntu-20.04", "net1=192.168.1.70"},
+		{
+			Name: "proxy-01-nginx-frontend-v2-prod", ID: "345d6789", Status: "BUILD",
+			Flavor: map[string]interface{}{"flavor": "m1.medium"},
+			Image: map[string]interface{}{"image": "ubuntu-22.04"},
+			Addresses: map[string]interface{}{"addresses": "net1=192.168.1.50"},
+		},
+		{
+			Name: "monitor-01-prometheus-central-collector", ID: "567e8901", Status: "ERROR",
+			Flavor: map[string]interface{}{"flavor": "m1.large"},
+			Image: map[string]interface{}{"image": "debian-11"},
+			Addresses: map[string]interface{}{"addresses": "net1=192.168.1.60"},
+		},
+		{
+			Name: "worker-02-processing-long-job-handler", ID: "678f9012", Status: "ACTIVE",
+			Flavor: map[string]interface{}{"flavor": "m1.xlarge"},
+			Image: map[string]interface{}{"image": "ubuntu-20.04"},
+			Addresses: map[string]interface{}{"addresses": "net1=192.168.1.70"},
+		},
 	},
 	"qa": {
-		{"backup-01", "789g0123", "SHUTOFF", "m1.medium", "centos-8", "net1=192.168.1.80"},
-		{"test-01", "890h1234", "ACTIVE", "m1.small", "fedora-35", "net1=192.168.1.90"},
-		{"web-02-derpify-access-worker-10100-and-stuff", "901i2345", "ACTIVE", "m1.small", "ubuntu-20.04", "net1=192.168.1.100"},
-		{"db-02", "012j3456", "ERROR", "m1.medium", "ubuntu-18.04", "net1=192.168.1.110"},
+		{
+			Name: "backup-01", ID: "789g0123", Status: "SHUTOFF",
+			Flavor: map[string]interface{}{"flavor": "m1.medium"},
+			Image: map[string]interface{}{"image": "centos-8"},
+			Addresses: map[string]interface{}{"addresses": "net1=192.168.1.80"},
+		},
+		{
+			Name: "test-01", ID: "890h1234", Status: "ACTIVE",
+			Flavor: map[string]interface{}{"flavor": "m1.small"},
+			Image: map[string]interface{}{"image": "fedora-35"},
+			Addresses: map[string]interface{}{"addresses": "net1=192.168.1.90"},
+		},
+		{
+			Name: "web-02-derpify-access-worker-10100-and-stuff", ID: "901i2345", Status: "ACTIVE",
+			Flavor: map[string]interface{}{"flavor": "m1.small"},
+			Image: map[string]interface{}{"image": "ubuntu-20.04"},
+			Addresses: map[string]interface{}{"addresses": "net1=192.168.1.100"},
+		},
+		{
+			Name: "db-02", ID: "012j3456", Status: "ERROR",
+			Flavor: map[string]interface{}{"flavor": "m1.medium"},
+			Image: map[string]interface{}{"image": "ubuntu-18.04"},
+			Addresses: map[string]interface{}{"addresses": "net1=192.168.1.110"},
+		},
+		{
+			Name: "batch-01", ID: "345k6789", Status: "ACTIVE",
+			Flavor: map[string]interface{}{"flavor": "m1.large"},
+			Image: map[string]interface{}{"image": "centos-7"},
+			Addresses: map[string]interface{}{"addresses": "net1=192.168.1.120"},
+		},
 	},
-	"ops": {
-		{"batch-01", "345k6789", "ACTIVE", "m1.large", "centos-7", "net1=192.168.1.120"},
-		{"test-web-01-derpify-access-worker-10099-and-stuff-or-something", "123e4567", "ACTIVE", "m1.small", "ubuntu-20.04", "net1=192.168.1.10"},
-		{"test-db-01", "789a0123", "SHUTOFF", "m1.medium", "ubuntu-18.04", "net1=192.168.1.20"},
-		{"test-app-01", "456b7890", "ACTIVE", "m1.large", "centos-7", "net1=192.168.1.30"},
-	},
-	"legacy": {
-		{"test-cache-01", "234c5678", "ACTIVE", "m1.small", "alpine-3.16", "net1=192.168.1.40"},
-		{"test-proxy-01-nginx-frontend-v2-prod", "345d6789", "BUILD", "m1.medium", "ubuntu-22.04", "net1=192.168.1.50"},
-		{"test-monitor-01-prometheus-central-collector", "567e8901", "ERROR", "m1.large", "debian-11", "net1=192.168.1.60"},
-	},
-	"research": {
-		{"test-worker-02-processing-long-job-handler", "678f9012", "ACTIVE", "m1.xlarge", "ubuntu-20.04", "net1=192.168.1.70"},
-		{"test-backup-01", "789g0123", "SHUTOFF", "m1.medium", "centos-8", "net1=192.168.1.80"},
-		{"test-test-01", "890h1234", "ACTIVE", "m1.small", "fedora-35", "net1=192.168.1.90"},
-		{"test-web-02-derpify-access-worker-10100-and-stuff", "901i2345", "ACTIVE", "m1.small", "ubuntu-20.04", "net1=192.168.1.100"},
-
-	},
-	"staging": {
-		{"test-santa-web-01-derpify-access-worker-10099-and-stuff-or-something", "123e4567", "ACTIVE", "m1.small", "ubuntu-20.04", "net1=192.168.1.10"},
-		{"test-santa-db-01", "789a0123", "SHUTOFF", "m1.medium", "ubuntu-18.04", "net1=192.168.1.20"},
-		{"test-santa-app-01", "456b7890", "ACTIVE", "m1.large", "centos-7", "net1=192.168.1.30"},
+	"test": {
+		{
+			Name: "test-web-01-derpify-access-worker-10099-and-stuff-or-something", ID: "123e4567", Status: "ACTIVE",
+			Flavor: map[string]interface{}{"flavor": "m1.small"},
+			Image: map[string]interface{}{"image": "ubuntu-20.04"},
+			Addresses: map[string]interface{}{"addresses": "net1=192.168.1.10"},
+		},
 	},
 	"prod": {
-		{"test-db-02", "012j3456", "ERROR", "m1.medium", "ubuntu-18.04", "net1=192.168.1.110"},
-		{"test-batch-01", "345k6789", "ACTIVE", "m1.large", "centos-7", "net1=192.168.1.120"},
-		
-		{"test-santa-cache-01", "234c5678", "ACTIVE", "m1.small", "alpine-3.16", "net1=192.168.1.40"},
-		{"test-santa-proxy-01-nginx-frontend-v2-prod", "345d6789", "BUILD", "m1.medium", "ubuntu-22.04", "net1=192.168.1.50"},
-		{"test-santa-monitor-01-prometheus-central-collector", "567e8901", "ERROR", "m1.large", "debian-11", "net1=192.168.1.60"},
-		{"test-santa-worker-02-processing-long-job-handler", "678f9012", "ACTIVE", "m1.xlarge", "ubuntu-20.04", "net1=192.168.1.70"},
-		{"test-santa-backup-01", "789g0123", "SHUTOFF", "m1.medium", "centos-8", "net1=192.168.1.80"},
-		{"test-santa-test-01", "890h1234", "ACTIVE", "m1.small", "fedora-35", "net1=192.168.1.90"},
-		{"test-santa-web-02-derpify-access-worker-10100-and-stuff", "901i2345", "ACTIVE", "m1.small", "ubuntu-20.04", "net1=192.168.1.100"},
-		{"test-santa-db-02", "012j3456", "ERROR", "m1.medium", "ubuntu-18.04", "net1=192.168.1.110"},
-		{"test-santa-batch-01", "345k6789", "ACTIVE", "m1.large", "centos-7", "net1=192.168.1.120"},
+		{
+			Name: "test-db-01", ID: "789a0123", Status: "SHUTOFF",
+			Flavor: map[string]interface{}{"flavor": "m1.medium"},
+			Image: map[string]interface{}{"image": "ubuntu-18.04"},
+			Addresses: map[string]interface{}{"addresses": "net1=192.168.1.20"},
+		},
+		{
+			Name: "test-app-01", ID: "456b7890", Status: "ACTIVE",
+			Flavor: map[string]interface{}{"flavor": "m1.large"},
+			Image: map[string]interface{}{"image": "centos-7"},
+			Addresses: map[string]interface{}{"addresses": "net1=192.168.1.30"},
+		},
+		{
+			Name: "test-cache-01", ID: "234c5678", Status: "ACTIVE",
+			Flavor: map[string]interface{}{"flavor": "m1.small"},
+			Image: map[string]interface{}{"image": "alpine-3.16"},
+			Addresses: map[string]interface{}{"addresses": "net1=192.168.1.40"},
+		},
+		{
+			Name: "test-proxy-01-nginx-frontend-v2-prod", ID: "345d6789", Status: "BUILD",
+			Flavor: map[string]interface{}{"flavor": "m1.medium"},
+			Image: map[string]interface{}{"image": "ubuntu-22.04"},
+			Addresses: map[string]interface{}{"addresses": "net1=192.168.1.50"},
+		},
+	},
+	"legacy": {
+		{
+			Name: "test-monitor-01-prometheus-central-collector", ID: "567e8901", Status: "ERROR",
+			Flavor: map[string]interface{}{"flavor": "m1.large"},
+			Image: map[string]interface{}{"image": "debian-11"},
+			Addresses: map[string]interface{}{"addresses": "net1=192.168.1.60"},
+		},
+		{
+			Name: "test-worker-02-processing-long-job-handler", ID: "678f9012", Status: "ACTIVE",
+			Flavor: map[string]interface{}{"flavor": "m1.xlarge"},
+			Image: map[string]interface{}{"image": "ubuntu-20.04"},
+			Addresses: map[string]interface{}{"addresses": "net1=192.168.1.70"},
+		},
+		{
+			Name: "test-backup-01", ID: "789g0123", Status: "SHUTOFF",
+			Flavor: map[string]interface{}{"flavor": "m1.medium"},
+			Image: map[string]interface{}{"image": "centos-8"},
+			Addresses: map[string]interface{}{"addresses": "net1=192.168.1.80"},
+		},
+		{
+			Name: "test-test-01", ID: "890h1234", Status: "ACTIVE",
+			Flavor: map[string]interface{}{"flavor": "m1.small"},
+			Image: map[string]interface{}{"image": "fedora-35"},
+			Addresses: map[string]interface{}{"addresses": "net1=192.168.1.90"},
+		},
+		{
+			Name: "test-web-02-derpify-access-worker-10100-and-stuff", ID: "901i2345", Status: "ACTIVE",
+			Flavor: map[string]interface{}{"flavor": "m1.small"},
+			Image: map[string]interface{}{"image": "ubuntu-20.04"},
+			Addresses: map[string]interface{}{"addresses": "net1=192.168.1.100"},
+		},
+		{
+			Name: "test-db-02", ID: "012j3456", Status: "ERROR",
+			Flavor: map[string]interface{}{"flavor": "m1.medium"},
+			Image: map[string]interface{}{"image": "ubuntu-18.04"},
+			Addresses: map[string]interface{}{"addresses": "net1=192.168.1.110"},
+		},
+		{
+			Name: "test-batch-01", ID: "345k6789", Status: "ACTIVE",
+			Flavor: map[string]interface{}{"flavor": "m1.large"},
+			Image: map[string]interface{}{"image": "centos-7"},
+			Addresses: map[string]interface{}{"addresses": "net1=192.168.1.120"},
+		},
 	},
 }
 
-func FetchServers() []Server {
+
+func FetchServers() []openstack_servers.Server {
 	opts, err := openstack.AuthOptionsFromEnv()
 	project := os.Getenv("OS_PROJECT_NAME")
 	if project == "" {
@@ -111,16 +215,5 @@ func FetchServers() []Server {
 		return mockServers[project]
 	}
 
-	var result []Server
-	for _, s := range serverList {
-		result = append(result, Server{
-			Name:     s.Name,
-			ID:       s.ID,
-			Status:   s.Status,
-			Flavor:   fmt.Sprintf("%v", s.Flavor["id"]),
-			Image:    fmt.Sprintf("%v", s.Image["id"]),
-			Networks: fmt.Sprintf("%v", s.Addresses),
-		})
-	}
-	return result
+	return serverList
 }

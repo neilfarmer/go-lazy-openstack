@@ -6,6 +6,7 @@ import (
 	"github.com/gophercloud/gophercloud"
 	"github.com/gophercloud/gophercloud/openstack"
 	"github.com/gophercloud/gophercloud/openstack/identity/v3/projects"
+	openstack_projects "github.com/gophercloud/gophercloud/openstack/identity/v3/projects"
 )
 
 // Project represents a simplified project for UI usage.
@@ -18,20 +19,69 @@ type Project struct {
 }
 
 // mockProjects are used if Keystone fails or returns nothing.
-var mockProjects = []Project{
-	{"proj-001", "admin", "Administrative project", "default", true},
-	{"proj-002", "dev", "Development team", "default", true},
-	{"proj-003", "qa", "Quality assurance", "default", true},
-	{"proj-004", "ops", "Operations team", "default", true},
-	{"proj-005", "legacy", "Legacy systems", "default", false},
-	{"proj-006", "research", "R&D team sandbox", "default", true},
-	{"proj-007", "staging", "Staging environment", "default", true},
-	{"proj-008", "prod", "Production workloads", "default", true},
+var mockProjects = []openstack_projects.Project{
+	{
+		ID:          "proj-001",
+		Name:        "admin",
+		Description: "Administrative project",
+		DomainID:    "default",
+		Enabled:     true,
+	},
+	{
+		ID:          "proj-002",
+		Name:        "dev",
+		Description: "Development team",
+		DomainID:    "default",
+		Enabled:     true,
+	},
+	{
+		ID:          "proj-003",
+		Name:        "qa",
+		Description: "Quality assurance",
+		DomainID:    "default",
+		Enabled:     true,
+	},
+	{
+		ID:          "proj-004",
+		Name:        "ops",
+		Description: "Operations team",
+		DomainID:    "default",
+		Enabled:     true,
+	},
+	{
+		ID:          "proj-005",
+		Name:        "legacy",
+		Description: "Legacy systems",
+		DomainID:    "default",
+		Enabled:     false,
+	},
+	{
+		ID:          "proj-006",
+		Name:        "research",
+		Description: "R&D team sandbox",
+		DomainID:    "default",
+		Enabled:     true,
+	},
+	{
+		ID:          "proj-007",
+		Name:        "staging",
+		Description: "Staging environment",
+		DomainID:    "default",
+		Enabled:     true,
+	},
+	{
+		ID:          "proj-008",
+		Name:        "prod",
+		Description: "Production workloads",
+		DomainID:    "default",
+		Enabled:     true,
+	},
 }
+
 
 // fetchProjects tries to retrieve projects from Keystone.
 // Falls back to mockProjects on error or empty response.
-func FetchProjects() []Project {
+func FetchProjects() []openstack_projects.Project {
 	opts, err := openstack.AuthOptionsFromEnv()
 	if err != nil {
 		fmt.Println("Auth error, falling back to mock projects:", err)
@@ -62,15 +112,5 @@ func FetchProjects() []Project {
 		return mockProjects
 	}
 
-	var result []Project
-	for _, p := range projectList {
-		result = append(result, Project{
-			ID:          p.ID,
-			Name:        p.Name,
-			Description: p.Description,
-			DomainID:    p.DomainID,
-			Enabled:     p.Enabled,
-		})
-	}
-	return result
+	return projectList
 }

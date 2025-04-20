@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
 	"time"
@@ -111,7 +112,7 @@ func main() {
 	for _, image := range images.FetchImages() {
 		imagesList.AddItem(image.Name, "", -1, func() {
 			detailsView.Clear()
-			fmt.Fprintf(detailsView, "ID: %s\nName: %s\nSize: %d\nOS: %s", image.ID, image.Name, image.Size, image.OS)
+			fmt.Fprintf(detailsView, "ID: %s\nName: %s\nSize: %d", image.ID, image.Name, image.SizeBytes)
 		})
 	}
 
@@ -236,7 +237,19 @@ func populateServersList() {
 	for _, server := range servers.FetchServers() {
 		serverList.AddItem(server.Name, "", -1, func() {
 			detailsView.Clear()
-			fmt.Fprintf(detailsView, "ID: %s\nStatus: %s\nFlavor: %s\nImage: %s\nNetworks: %s", server.ID, server.Status, server.Flavor, server.Image, server.Networks)
+			flavor, err := json.Marshal(server.Flavor)
+			if err != nil {
+				flavor = []byte("unable to marshal flavor")
+			}
+			image, err := json.Marshal(server.Image)
+			if err != nil {
+				image = []byte("unable to marshal image")
+			}
+			addresses, err := json.Marshal(server.Addresses)
+			if err != nil {
+				addresses = []byte("unable to marshal addresses")
+			}
+			fmt.Fprintf(detailsView, "ID: %s\nStatus: %s\nFlavor: %s\nImage: %s\nNetworks: %s", server.ID, server.Status, flavor, image, addresses)
 		})
 	}
 }
@@ -256,7 +269,7 @@ func populateImagesList() {
 	for _, image := range images.FetchImages() {
 		imagesList.AddItem(image.Name, "", -1, func() {
 			detailsView.Clear()
-			fmt.Fprintf(detailsView, "ID: %s\nName: %s\nSize: %d\nOS: %s", image.ID, image.Name, image.Size, image.OS)
+			fmt.Fprintf(detailsView, "ID: %s\nName: %s\nSize: %d", image.ID, image.Name, image.SizeBytes)
 		})
 	}
 }

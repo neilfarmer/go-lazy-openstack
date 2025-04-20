@@ -7,6 +7,7 @@ import (
 	"github.com/gophercloud/gophercloud"
 	"github.com/gophercloud/gophercloud/openstack"
 	"github.com/gophercloud/gophercloud/openstack/imageservice/v2/images"
+	openstack_images "github.com/gophercloud/gophercloud/openstack/imageservice/v2/images"
 )
 
 // Image represents a simplified image object for UI use.
@@ -17,59 +18,153 @@ type Image struct {
 	Size int64
 }
 
-// mockImages are used if OpenStack Glance fails or returns nothing.
-var mockImages = map[string][]Image{
+var mockImages = map[string][]images.Image{
 	"dev": {
-		{"img-ubuntu-2004", "Ubuntu 20.04 LTS", "linux", 2048},
-		{"img-ubuntu-2204", "Ubuntu 22.04 LTS", "linux", 2300},
-		{"img-centos-7", "CentOS 7", "linux", 1800},
-		{"img-centos-8", "CentOS 8", "linux", 2000},
-		{"img-debian-11", "Debian 11", "linux", 2100},
+		{
+			ID:        "img-ubuntu-2004",
+			Name:      "Ubuntu 20.04 LTS",
+			SizeBytes: 2300,
+		},
+		{
+			ID:        "img-centos-7",
+			Name:      "CentOS 7",
+			SizeBytes: 1800,
+		},
+		{
+			ID:        "img-centos-8",
+			Name:      "CentOS 8",
+			SizeBytes: 2000,
+		},
+		{
+			ID:        "img-debian-11",
+			Name:      "Debian 11",
+			SizeBytes: 2100,
+		},
 	},
 	"admin": {
-		{"img-rocky-9", "Rocky Linux 9", "linux", 1900},
+		{
+			ID:        "img-rocky-9",
+			Name:      "Rocky Linux 9",
+			SizeBytes: 1900,
+		},
 	},
 	"qa": {
-		{"img-alpine-3", "Alpine 3.16", "linux", 512},
+		{
+			ID:        "img-alpine-3",
+			Name:      "Alpine 3.16",
+			SizeBytes: 512,
+		},
 	},
 	"ops": {
-		{"img-win2019", "Windows Server 2019", "windows", 4096},
-		{"img-win2022", "Windows Server 2022", "windows", 5000},
+		{
+			ID:        "img-win2019",
+			Name:      "Windows Server 2019",
+			SizeBytes: 4096,
+		},
+		{
+			ID:        "img-win2022",
+			Name:      "Windows Server 2022",
+			SizeBytes: 5000,
+		},
 	},
 	"legacy": {
-		{"img-debian-11", "Debian 11", "linux", 2100},
-		{"img-fedora-35", "Fedora 35", "linux", 2200},
+		{
+			ID:        "img-debian-11",
+			Name:      "Debian 11",
+			SizeBytes: 2100,
+		},
+		{
+			ID:        "img-fedora-35",
+			Name:      "Fedora 35",
+			SizeBytes: 2200,
+		},
 	},
 	"research": {
-		{"img-centos-7", "CentOS 7", "linux", 1800},
-		{"img-centos-8", "CentOS 8", "linux", 2000},
+		{
+			ID:        "img-centos-7",
+			Name:      "CentOS 7",
+			SizeBytes: 1800,
+		},
+		{
+			ID:        "img-centos-8",
+			Name:      "CentOS 8",
+			SizeBytes: 2000,
+		},
 	},
 	"staging": {
-		{"img-ubuntu-2004", "Ubuntu 20.04 LTS", "linux", 2048},
-		{"img-ubuntu-2204", "Ubuntu 22.04 LTS", "linux", 2300},
+		{
+			ID:        "img-ubuntu-2004",
+			Name:      "Ubuntu 20.04 LTS",
+			SizeBytes: 2048,
+		},
+		{
+			ID:        "img-ubuntu-2204",
+			Name:      "Ubuntu 22.04 LTS",
+			SizeBytes: 2300,
+		},
 	},
 	"prod": {
-		{"img-ubuntu-2004", "Ubuntu 20.04 LTS", "linux", 2048},
-		{"img-ubuntu-2204", "Ubuntu 22.04 LTS", "linux", 2300},
-		{"img-centos-7", "CentOS 7", "linux", 1800},
-		{"img-centos-8", "CentOS 8", "linux", 2000},
-		{"img-debian-11", "Debian 11", "linux", 2100},
-		{"img-fedora-35", "Fedora 35", "linux", 2200},
-		{"img-win2019", "Windows Server 2019", "windows", 4096},
-		{"img-win2022", "Windows Server 2022", "windows", 5000},
-		{"img-alpine-3", "Alpine 3.16", "linux", 512},
-		{"img-rocky-9", "Rocky Linux 9", "linux", 1900},
+		{
+			ID:        "img-ubuntu-2004",
+			Name:      "Ubuntu 20.04 LTS",
+			SizeBytes: 2048,
+		},
+		{
+			ID:        "img-ubuntu-2204",
+			Name:      "Ubuntu 22.04 LTS",
+			SizeBytes: 2300,
+		},
+		{
+			ID:        "img-centos-7",
+			Name:      "CentOS 7",
+			SizeBytes: 1800,
+		},
+		{
+			ID:        "img-centos-8",
+			Name:      "CentOS 8",
+			SizeBytes: 2000,
+		},
+		{
+			ID:        "img-debian-11",
+			Name:      "Debian 11",
+			SizeBytes: 2100,
+		},
+		{
+			ID:        "img-fedora-35",
+			Name:      "Fedora 35",
+			SizeBytes: 2200,
+		},
+		{
+			ID:        "img-win2019",
+			Name:      "Windows Server 2019",
+			SizeBytes: 4096,
+		},
+		{
+			ID:        "img-win2022",
+			Name:      "Windows Server 2022",
+			SizeBytes: 5000,
+		},
+		{
+			ID:        "img-alpine-3",
+			Name:      "Alpine 3.16",
+			SizeBytes: 512,
+		},
+		{
+			ID:        "img-rocky-9",
+			Name:      "Rocky Linux 9",
+			SizeBytes: 1900,
+		},
 	},
 }
 
+
 // fetchImages attempts to get a list of OpenStack images.
 // If anything fails, it returns mockImages.
-func FetchImages() []Image {
+func FetchImages() []openstack_images.Image {
 	opts, err := openstack.AuthOptionsFromEnv()
 	project := os.Getenv("OS_PROJECT_NAME")
-	if err != nil {
-		fmt.Println("Auth error, falling back to mock image data:", err)
-		return mockImages[project]
+	if project == "" {
+		panic("OS_PROJECT_NAME environment variable is not set")
 	}
 
 	provider, err := openstack.AuthenticatedClient(opts)
@@ -96,14 +191,5 @@ func FetchImages() []Image {
 		return mockImages[project]
 	}
 
-	var result []Image
-	for _, img := range imageList {
-		result = append(result, Image{
-			ID:   img.ID,
-			Name: img.Name,
-			OS:   fmt.Sprintf("%v", img.Properties["os_distro"]),
-			Size: img.SizeBytes / 1024 / 1024, // convert to MB
-		})
-	}
-	return result
+	return imageList
 }
