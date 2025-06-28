@@ -10,7 +10,9 @@ import (
 	"github.com/neilfarmer/internal/flavors"
 	projects "github.com/neilfarmer/internal/identity"
 	"github.com/neilfarmer/internal/images"
+	"github.com/neilfarmer/internal/networks"
 	"github.com/neilfarmer/internal/servers"
+	"github.com/neilfarmer/internal/volumes"
 	"github.com/rivo/tview"
 )
 
@@ -22,12 +24,16 @@ var serverList *tview.List
 var imagesList *tview.List
 var flavorsList *tview.List
 var projectsList *tview.List
+var networksList *tview.List
+var volumesList *tview.List
 
 var knownCommands = []string{
 	"servers",
 	"images",
 	"flavors",
 	"projects",
+	"volumes",
+	"networks",
 }
 
 var acceptShortcuts = true
@@ -53,9 +59,17 @@ func main() {
 				populateFlavorsList()
 				pages.SwitchToPage("flavors")
 				detailsView.Clear()
+			case 'v':
+				populateVolumesList()
+				pages.SwitchToPage("volumes")
+				detailsView.Clear()
 			case 's':
 				populateServersList()
 				pages.SwitchToPage("servers")
+				detailsView.Clear()
+			case 'n':
+				populateNetworksList()
+				pages.SwitchToPage("networks")
 				detailsView.Clear()
 			case 'p':
 				pages.SwitchToPage("projects")
@@ -66,7 +80,7 @@ func main() {
 				return event
 			}
 		}
-		
+
 		return event
 	})
 
@@ -79,17 +93,17 @@ func main() {
 			app.Stop()
 			return nil
 		}
-		return event 
+		return event
 	})
 
-	go func () {
+	go func() {
 		for {
 			now := time.Now().Format("15:04:05")
 			app.QueueUpdateDraw(func() {
 				header.Clear()
 				_, _, width, _ := header.GetInnerRect()
-				
-				shortcuts := "(p)rojects (i)mages (f)flavors (s)ervers (q)uit"
+
+				shortcuts := "(p)rojects (i)mages (f)flavors (s)ervers (n)etworks (v)volumes (q)uit"
 				text := fmt.Sprintf("%s%*s", shortcuts, width-len(shortcuts), now)
 				fmt.Fprintf(header, text)
 				fmt.Fprintf(header, "\n")
@@ -102,28 +116,21 @@ func main() {
 
 	detailsView = tview.NewTextView()
 	detailsView.SetBorder(true).SetTitle(" Details ").SetTitleAlign(tview.AlignCenter)
-	
+
 	serverList = tview.NewList()
 	serverList.SetBorder(true).SetTitle(" Servers ").SetTitleAlign(tview.AlignCenter)
-	
 
 	imagesList = tview.NewList()
 	imagesList.SetBorder(true).SetTitle(" Images ").SetTitleAlign(tview.AlignCenter)
-	for _, image := range images.FetchImages() {
-		imagesList.AddItem(image.Name, "", -1, func() {
-			detailsView.Clear()
-			fmt.Fprintf(detailsView, "ID: %s\nName: %s\nSize: %d", image.ID, image.Name, image.SizeBytes)
-		})
-	}
 
 	flavorsList = tview.NewList()
 	flavorsList.SetBorder(true).SetTitle(" Flavors ").SetTitleAlign(tview.AlignCenter)
-	for _, flavor := range flavors.FetchFlavors() {
-		flavorsList.AddItem(flavor.Name, "", -1, func() {
-			detailsView.Clear()
-			fmt.Fprintf(detailsView, "ID: %s\nName: %s\nVCPU: %d\nRAM: %d\nDisk: %d", flavor.ID, flavor.Name, flavor.VCPUs, flavor.RAM, flavor.Disk)
-		})
-	}
+
+	volumesList = tview.NewList()
+	volumesList.SetBorder(true).SetTitle(" Volumes ").SetTitleAlign(tview.AlignCenter)
+
+	networksList = tview.NewList()
+	networksList.SetBorder(true).SetTitle(" Networks ").SetTitleAlign(tview.AlignCenter)
 
 	projectsList = tview.NewList()
 	projectsList.SetBorder(true).SetTitle(" Projects ").SetTitleAlign(tview.AlignCenter)
@@ -138,10 +145,10 @@ func main() {
 	// This is our handy dandy input prompt
 	inputPrompt = tview.NewInputField()
 	inputPrompt.SetLabel("Command: ").
-	SetFieldWidth(30).
-	SetBorder(true).
-	SetTitle(" Command Prompt ").
-	SetTitleAlign(tview.AlignLeft)
+		SetFieldWidth(30).
+		SetBorder(true).
+		SetTitle(" Command Prompt ").
+		SetTitleAlign(tview.AlignLeft)
 
 	inputPrompt.SetDoneFunc(func(key tcell.Key) {
 		if key == tcell.KeyEnter {
@@ -164,12 +171,24 @@ func main() {
 				pages.SwitchToPage(command)
 				detailsView.Clear()
 			}
-			
+
+			if command == "volumes" {
+				populateVolumesList()
+				pages.SwitchToPage(command)
+				detailsView.Clear()
+			}
+
+			if command == "networks" {
+				populateNetworksList()
+				pages.SwitchToPage(command)
+				detailsView.Clear()
+			}
+
 			if command == "projects" {
 				pages.SwitchToPage(command)
 				detailsView.Clear()
 			}
-			
+
 			headerFlex.ResizeItem(inputPrompt, 0, 0) // hide prompt
 			acceptShortcuts = true
 		}
@@ -192,29 +211,43 @@ func main() {
 		AddItem(headerFlex, 0, 1, false).
 		AddItem(tview.NewFlex().SetDirection(tview.FlexColumn).
 			AddItem(serverList, 0, 1, true).
-			AddItem(detailsView, 0, 4, false), 
-		0, 5, true)
+			AddItem(detailsView, 0, 4, false),
+			0, 5, true)
 
 	imageViewFlex := tview.NewFlex().SetDirection(tview.FlexRow).
-	AddItem(headerFlex, 0, 1, false).
-	AddItem(tview.NewFlex().SetDirection(tview.FlexColumn).
-		AddItem(imagesList, 0, 1, true).
-		AddItem(detailsView, 0, 4, false), 
-	0, 5, true)
+		AddItem(headerFlex, 0, 1, false).
+		AddItem(tview.NewFlex().SetDirection(tview.FlexColumn).
+			AddItem(imagesList, 0, 1, true).
+			AddItem(detailsView, 0, 4, false),
+			0, 5, true)
 
 	flavorViewFlex := tview.NewFlex().SetDirection(tview.FlexRow).
-	AddItem(headerFlex, 0, 1, false).
-	AddItem(tview.NewFlex().SetDirection(tview.FlexColumn).
-		AddItem(flavorsList, 0, 1, true).
-		AddItem(detailsView, 0, 4, false), 
-	0, 5, true)
-	
+		AddItem(headerFlex, 0, 1, false).
+		AddItem(tview.NewFlex().SetDirection(tview.FlexColumn).
+			AddItem(flavorsList, 0, 1, true).
+			AddItem(detailsView, 0, 4, false),
+			0, 5, true)
+
+	volumeViewFlex := tview.NewFlex().SetDirection(tview.FlexRow).
+		AddItem(headerFlex, 0, 1, false).
+		AddItem(tview.NewFlex().SetDirection(tview.FlexColumn).
+			AddItem(volumesList, 0, 1, true).
+			AddItem(detailsView, 0, 4, false),
+			0, 5, true)
+
+	networksViewFlex := tview.NewFlex().SetDirection(tview.FlexRow).
+		AddItem(headerFlex, 0, 1, false).
+		AddItem(tview.NewFlex().SetDirection(tview.FlexColumn).
+			AddItem(networksList, 0, 1, true).
+			AddItem(detailsView, 0, 4, false),
+			0, 5, true)
+
 	projectsViewFlex := tview.NewFlex().SetDirection(tview.FlexRow).
-	AddItem(headerFlex, 0, 1, false).
-	AddItem(tview.NewFlex().SetDirection(tview.FlexColumn).
-		AddItem(projectsList, 0, 1, true).
-		AddItem(detailsView, 0, 4, false), 
-	0, 5, true)
+		AddItem(headerFlex, 0, 1, false).
+		AddItem(tview.NewFlex().SetDirection(tview.FlexColumn).
+			AddItem(projectsList, 0, 1, true).
+			AddItem(detailsView, 0, 4, false),
+			0, 5, true)
 
 	populateServersList()
 
@@ -222,9 +255,9 @@ func main() {
 	pages.AddPage("servers", serverViewFlex, true, true)
 	pages.AddPage("images", imageViewFlex, true, true)
 	pages.AddPage("flavors", flavorViewFlex, true, true)
+	pages.AddPage("volumes", volumeViewFlex, true, true)
+	pages.AddPage("networks", networksViewFlex, true, true)
 	pages.AddPage("projects", projectsViewFlex, true, true)
-
-
 
 	err := app.SetRoot(pages, true).Run()
 	if err != nil {
@@ -237,19 +270,19 @@ func populateServersList() {
 	for _, server := range servers.FetchServers() {
 		serverList.AddItem(server.Name, "", -1, func() {
 			detailsView.Clear()
-			flavor, err := json.Marshal(server.Flavor)
-			if err != nil {
-				flavor = []byte("unable to marshal flavor")
-			}
-			image, err := json.Marshal(server.Image)
-			if err != nil {
-				image = []byte("unable to marshal image")
-			}
+			flavorID, _ := server.Flavor["id"].(string)
+			flavor := flavors.FetchFlavorByID(flavorID)
+			flavorInfo := fmt.Sprintf("\n\tName: %s, \n\tRAM: %dMB, \n\tvCPUs: %d, \n\tDisk: %dGB", flavor.Name, flavor.RAM, flavor.VCPUs, flavor.Disk)
+
+			imageID, _ := server.Image["id"].(string)
+			image := images.FetchImageByID(imageID)
+			imageInfo := fmt.Sprintf("\n\tName: %s,\n\tID: %s, \n\tSize: %dMB, \n\tTags: %s", image.Name, imageID, image.SizeBytes, image.Tags)
+
 			addresses, err := json.Marshal(server.Addresses)
 			if err != nil {
 				addresses = []byte("unable to marshal addresses")
 			}
-			fmt.Fprintf(detailsView, "ID: %s\nStatus: %s\nFlavor: %s\nImage: %s\nNetworks: %s", server.ID, server.Status, flavor, image, addresses)
+			fmt.Fprintf(detailsView, "ID: %s\nStatus: %s\nFlavor: %s\nImage: %s\nNetworks: %s\nAttached Volumes: %s", server.ID, server.Status, flavorInfo, imageInfo, addresses, server.AttachedVolumes)
 		})
 	}
 }
@@ -260,6 +293,28 @@ func populateFlavorsList() {
 		flavorsList.AddItem(flavor.Name, "", -1, func() {
 			detailsView.Clear()
 			fmt.Fprintf(detailsView, "ID: %s\nName: %s\nVCPU: %d\nRAM: %d\nDisk: %d", flavor.ID, flavor.Name, flavor.VCPUs, flavor.RAM, flavor.Disk)
+		})
+	}
+}
+
+func populateVolumesList() {
+	volumesList.Clear()
+	for _, volume := range volumes.FetchVolumes() {
+		volumesList.AddItem(volume.Name, "", -1, func() {
+			detailsView.Clear()
+			fmt.Fprintf(detailsView, "\n\tID: %s\n\tName: %s\n\tDescription: %s\n\tCreated at: %s\n\tSize: %d\n\tType: %s", volume.ID, volume.Name, volume.Description, volume.CreatedAt, volume.Size, volume.VolumeType)
+		})
+	}
+}
+
+func populateNetworksList() {
+	networksList.Clear()
+	domain := projects.FetchDomainIDByName(os.Getenv("OS_USER_DOMAIN_NAME"))
+	project := projects.FetchProjectByName(os.Getenv("OS_PROJECT_NAME"), domain.ID)
+	for _, network := range networks.FetchNetworks(project.ID) {
+		networksList.AddItem(network.Name, "", -1, func() {
+			detailsView.Clear()
+			fmt.Fprintf(detailsView, "ID: %s\nName: %s", network.ID, network.Name)
 		})
 	}
 }
