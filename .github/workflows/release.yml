@@ -40,7 +40,7 @@ jobs:
           fi
 
           GOOS=${{ matrix.goos }} GOARCH=${{ matrix.goarch }} \
-            go build -o dist/${output_name} ./cmd
+            go build -o dist/${output_name} .
 
       - name: Upload Release Assets
         uses: softprops/action-gh-release@v2
