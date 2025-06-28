@@ -17,18 +17,13 @@ Built with [tview](https://github.com/rivo/tview) and [tcell](https://github.com
 
 ## Installation
 
-1. **Clone the repository:**
+1. Run install commands
 
-   ```bash
-   git clone https://github.com/neilfarmer/go-lazy-openstack.git
-   cd go-lazy-openstack
-   ```
-
-2. **Build:**
-
-   ```bash
-   go build -o go-lazy-openstack
-   ```
+```
+curl -LO https://github.com/neilfarmer/go-lazy-openstack/releases/download/v0.1.0/go-lazy-openstack-darwin-arm64
+chmod +x go-lazy-openstack-darwin-arm64
+sudo mv go-lazy-openstack-darwin-arm64 /usr/local/bin/go-lazy-openstack
+```
 
 ---
 
@@ -49,7 +44,7 @@ Built with [tview](https://github.com/rivo/tview) and [tcell](https://github.com
 2. **Run the application:**
 
    ```bash
-   ./go-lazy-openstack
+   go-lazy-openstack
    ```
 
 3. **Navigation:**
@@ -80,6 +75,24 @@ Built with [tview](https://github.com/rivo/tview) and [tcell](https://github.com
 ## Contributing
 
 Pull requests and issues are welcome! Please open an issue to discuss major changes.
+
+---
+
+## Releases
+
+1. Create a git tag with a semantic version
+
+```
+git tag v0.1.0
+git push origin v0.1.0
+```
+
+2. This will trigger the Github Action workflow to:
+
+- Build the binary for:
+   - Linux (amd64, arm64)
+   - macOS (amd64, arm64)
+   - Windows (amd64)
 
 ---
 
