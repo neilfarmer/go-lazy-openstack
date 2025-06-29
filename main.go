@@ -10,6 +10,7 @@ import (
 	"github.com/neilfarmer/internal/flavors"
 	projects "github.com/neilfarmer/internal/identity"
 	"github.com/neilfarmer/internal/images"
+	"github.com/neilfarmer/internal/loadbalancers"
 	"github.com/neilfarmer/internal/networks"
 	"github.com/neilfarmer/internal/servers"
 	"github.com/neilfarmer/internal/volumes"
@@ -26,6 +27,7 @@ var flavorsList *tview.List
 var projectsList *tview.List
 var networksList *tview.List
 var volumesList *tview.List
+var loadbalancersList *tview.List
 
 var knownCommands = []string{
 	"servers",
@@ -33,6 +35,7 @@ var knownCommands = []string{
 	"flavors",
 	"projects",
 	"volumes",
+	"loadbalancers",
 	"networks",
 }
 
@@ -58,6 +61,10 @@ func main() {
 			case 'f':
 				populateFlavorsList()
 				pages.SwitchToPage("flavors")
+				detailsView.Clear()
+			case 'l':
+				populateLoadbalancersList()
+				pages.SwitchToPage("loadbalancers")
 				detailsView.Clear()
 			case 'v':
 				populateVolumesList()
@@ -103,9 +110,9 @@ func main() {
 				header.Clear()
 				_, _, width, _ := header.GetInnerRect()
 
-				shortcuts := "(p)rojects (i)mages (f)flavors (s)ervers (n)etworks (v)volumes (q)uit"
+				shortcuts := "(p)rojects (i)mages (f)lavors (l)oadbalancers (s)ervers (n)etworks (v)olumes (q)uit"
 				text := fmt.Sprintf("%s%*s", shortcuts, width-len(shortcuts), now)
-				fmt.Fprintf(header, text)
+				fmt.Fprintf(header, "%s", text)
 				fmt.Fprintf(header, "\n")
 				fmt.Fprintf(header, "Current Project: %s\n", os.Getenv("OS_PROJECT_NAME"))
 			})
@@ -128,6 +135,9 @@ func main() {
 
 	volumesList = tview.NewList()
 	volumesList.SetBorder(true).SetTitle(" Volumes ").SetTitleAlign(tview.AlignCenter)
+
+	loadbalancersList = tview.NewList()
+	loadbalancersList.SetBorder(true).SetTitle(" Loadbalancers ").SetTitleAlign(tview.AlignCenter)
 
 	networksList = tview.NewList()
 	networksList.SetBorder(true).SetTitle(" Networks ").SetTitleAlign(tview.AlignCenter)
@@ -177,7 +187,11 @@ func main() {
 				pages.SwitchToPage(command)
 				detailsView.Clear()
 			}
-
+			if command == "loadbalancers" {
+				populateLoadbalancersList()
+				pages.SwitchToPage(command)
+				detailsView.Clear()
+			}
 			if command == "networks" {
 				populateNetworksList()
 				pages.SwitchToPage(command)
@@ -235,6 +249,13 @@ func main() {
 			AddItem(detailsView, 0, 4, false),
 			0, 5, true)
 
+	loadbalancerViewFlex := tview.NewFlex().SetDirection(tview.FlexRow).
+		AddItem(headerFlex, 0, 1, false).
+		AddItem(tview.NewFlex().SetDirection(tview.FlexColumn).
+			AddItem(loadbalancersList, 0, 1, true).
+			AddItem(detailsView, 0, 4, false),
+			0, 5, true)
+
 	networksViewFlex := tview.NewFlex().SetDirection(tview.FlexRow).
 		AddItem(headerFlex, 0, 1, false).
 		AddItem(tview.NewFlex().SetDirection(tview.FlexColumn).
@@ -256,6 +277,7 @@ func main() {
 	pages.AddPage("images", imageViewFlex, true, true)
 	pages.AddPage("flavors", flavorViewFlex, true, true)
 	pages.AddPage("volumes", volumeViewFlex, true, true)
+	pages.AddPage("loadbalancers", loadbalancerViewFlex, true, true)
 	pages.AddPage("networks", networksViewFlex, true, true)
 	pages.AddPage("projects", projectsViewFlex, true, true)
 
@@ -303,6 +325,18 @@ func populateVolumesList() {
 		volumesList.AddItem(volume.Name, "", -1, func() {
 			detailsView.Clear()
 			fmt.Fprintf(detailsView, "\n\tID: %s\n\tName: %s\n\tDescription: %s\n\tCreated at: %s\n\tSize: %d\n\tType: %s", volume.ID, volume.Name, volume.Description, volume.CreatedAt, volume.Size, volume.VolumeType)
+		})
+	}
+}
+
+func populateLoadbalancersList() {
+	loadbalancersList.Clear()
+	domain := projects.FetchDomainIDByName(os.Getenv("OS_USER_DOMAIN_NAME"))
+	project := projects.FetchProjectByName(os.Getenv("OS_PROJECT_NAME"), domain.ID)
+	for _, loadbalancer := range loadbalancers.FetchLoadbalancers(project.ID) {
+		loadbalancersList.AddItem(loadbalancer.Name, "", -1, func() {
+			detailsView.Clear()
+			fmt.Fprintf(detailsView, "\n\tID: %s\n\tName: %s\n\tVIP Address: %s\n\tOperating Status: %s\n\tProvisioning Status: %s\n\t", loadbalancer.ID, loadbalancer.Name, loadbalancer.VipAddress, loadbalancer.OperatingStatus, loadbalancer.ProvisioningStatus)
 		})
 	}
 }
