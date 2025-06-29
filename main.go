@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/gdamore/tcell/v2"
+	"github.com/neilfarmer/internal/aggregates"
 	"github.com/neilfarmer/internal/dns"
 	"github.com/neilfarmer/internal/flavors"
 	projects "github.com/neilfarmer/internal/identity"
@@ -22,6 +23,7 @@ var pages *tview.Pages
 var inputPrompt *tview.InputField
 var headerFlex *tview.Flex
 var detailsView *tview.TextView
+var aggregatesList *tview.List
 var serverList *tview.List
 var imagesList *tview.List
 var flavorsList *tview.List
@@ -33,6 +35,7 @@ var dnsList *tview.List
 
 var knownCommands = []string{
 	"servers",
+	"aggregates",
 	"images",
 	"flavors",
 	"projects",
@@ -57,6 +60,10 @@ func main() {
 
 		if acceptShortcuts {
 			switch event.Rune() {
+			case 'a':
+				populateAggregatesList()
+				pages.SwitchToPage("aggregates")
+				detailsView.Clear()
 			case 'i':
 				populateImagesList()
 				pages.SwitchToPage("images")
@@ -117,7 +124,7 @@ func main() {
 				header.Clear()
 				_, _, width, _ := header.GetInnerRect()
 
-				shortcuts := "(p)rojects (d)ns (i)mages (f)lavors (l)oadbalancers (s)ervers (n)etworks (v)olumes (q)uit"
+				shortcuts := "(a)ggregates (p)rojects (d)ns (i)mages (f)lavors (l)oadbalancers (s)ervers (n)etworks (v)olumes (q)uit"
 				text := fmt.Sprintf("%s%*s", shortcuts, width-len(shortcuts), now)
 				fmt.Fprintf(header, "%s", text)
 				fmt.Fprintf(header, "\n")
@@ -130,6 +137,9 @@ func main() {
 
 	detailsView = tview.NewTextView()
 	detailsView.SetBorder(true).SetTitle(" Details ").SetTitleAlign(tview.AlignCenter)
+
+	aggregatesList = tview.NewList()
+	aggregatesList.SetBorder(true).SetTitle(" Aggregates ").SetTitleAlign(tview.AlignCenter)
 
 	serverList = tview.NewList()
 	serverList.SetBorder(true).SetTitle(" Servers ").SetTitleAlign(tview.AlignCenter)
@@ -174,6 +184,11 @@ func main() {
 		if key == tcell.KeyEnter {
 			command := inputPrompt.GetText()
 			inputPrompt.SetText("")
+			if command == "aggregates" {
+				populateAggregatesList()
+				pages.SwitchToPage(command)
+				detailsView.Clear()
+			}
 
 			if command == "images" {
 				populateImagesList()
@@ -236,6 +251,13 @@ func main() {
 		AddItem(header, 0, 2, false).
 		AddItem(inputPrompt, 0, 0, false)
 
+	aggregateViewFlex := tview.NewFlex().SetDirection(tview.FlexRow).
+		AddItem(headerFlex, 0, 1, false).
+		AddItem(tview.NewFlex().SetDirection(tview.FlexColumn).
+			AddItem(aggregatesList, 0, 1, true).
+			AddItem(detailsView, 0, 4, false),
+			0, 5, true)
+
 	serverViewFlex := tview.NewFlex().SetDirection(tview.FlexRow).
 		AddItem(headerFlex, 0, 1, false).
 		AddItem(tview.NewFlex().SetDirection(tview.FlexColumn).
@@ -295,6 +317,7 @@ func main() {
 	populateServersList()
 
 	pages.AddPage("prompt", inputPrompt, true, false)
+	pages.AddPage("aggregates", aggregateViewFlex, true, true)
 	pages.AddPage("servers", serverViewFlex, true, true)
 	pages.AddPage("images", imageViewFlex, true, true)
 	pages.AddPage("flavors", flavorViewFlex, true, true)
@@ -328,6 +351,16 @@ func populateServersList() {
 				addresses = []byte("unable to marshal addresses")
 			}
 			fmt.Fprintf(detailsView, "ID: %s\nStatus: %s\nFlavor: %s\nImage: %s\nNetworks: %s\nAttached Volumes: %s", server.ID, server.Status, flavorInfo, imageInfo, addresses, server.AttachedVolumes)
+		})
+	}
+}
+
+func populateAggregatesList() {
+	aggregatesList.Clear()
+	for _, aggregate := range aggregates.FetchAggregates() {
+		aggregatesList.AddItem(aggregate.Name, "", -1, func() {
+			detailsView.Clear()
+			fmt.Fprintf(detailsView, "ID: %d\nName: %s\nMetadata: %s\nHosts: %s", aggregate.ID, aggregate.Name, aggregate.Metadata, aggregate.Hosts)
 		})
 	}
 }
