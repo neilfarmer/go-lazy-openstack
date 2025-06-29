@@ -10,6 +10,7 @@ import (
 	"github.com/neilfarmer/internal/aggregates"
 	"github.com/neilfarmer/internal/dns"
 	"github.com/neilfarmer/internal/flavors"
+	"github.com/neilfarmer/internal/hypervisors"
 	projects "github.com/neilfarmer/internal/identity"
 	"github.com/neilfarmer/internal/images"
 	"github.com/neilfarmer/internal/loadbalancers"
@@ -24,6 +25,7 @@ var inputPrompt *tview.InputField
 var headerFlex *tview.Flex
 var detailsView *tview.TextView
 var aggregatesList *tview.List
+var hypervisorsList *tview.List
 var serverList *tview.List
 var imagesList *tview.List
 var flavorsList *tview.List
@@ -36,6 +38,7 @@ var dnsList *tview.List
 var knownCommands = []string{
 	"servers",
 	"aggregates",
+	"hypervisors",
 	"images",
 	"flavors",
 	"projects",
@@ -75,6 +78,10 @@ func main() {
 			case 'l':
 				populateLoadbalancersList()
 				pages.SwitchToPage("loadbalancers")
+				detailsView.Clear()
+			case 'h':
+				populateHypervisorsList()
+				pages.SwitchToPage("hypervisors")
 				detailsView.Clear()
 			case 'd':
 				populateDnsList()
@@ -124,7 +131,7 @@ func main() {
 				header.Clear()
 				_, _, width, _ := header.GetInnerRect()
 
-				shortcuts := "(a)ggregates (p)rojects (d)ns (i)mages (f)lavors (l)oadbalancers (s)ervers (n)etworks (v)olumes (q)uit"
+				shortcuts := "(a)ggregates (p)rojects (d)ns (i)mages (f)lavors (h)ypervisors (l)oadbalancers (s)ervers (n)etworks (v)olumes (q)uit"
 				text := fmt.Sprintf("%s%*s", shortcuts, width-len(shortcuts), now)
 				fmt.Fprintf(header, "%s", text)
 				fmt.Fprintf(header, "\n")
@@ -149,6 +156,9 @@ func main() {
 
 	flavorsList = tview.NewList()
 	flavorsList.SetBorder(true).SetTitle(" Flavors ").SetTitleAlign(tview.AlignCenter)
+
+	hypervisorsList = tview.NewList()
+	hypervisorsList.SetBorder(true).SetTitle(" Hypervisors ").SetTitleAlign(tview.AlignCenter)
 
 	volumesList = tview.NewList()
 	volumesList.SetBorder(true).SetTitle(" Volumes ").SetTitleAlign(tview.AlignCenter)
@@ -206,7 +216,11 @@ func main() {
 				pages.SwitchToPage(command)
 				detailsView.Clear()
 			}
-
+			if command == "hypervisors" {
+				populateHypervisorsList()
+				pages.SwitchToPage(command)
+				detailsView.Clear()
+			}
 			if command == "volumes" {
 				populateVolumesList()
 				pages.SwitchToPage(command)
@@ -279,6 +293,13 @@ func main() {
 			AddItem(detailsView, 0, 4, false),
 			0, 5, true)
 
+	hypervisorsViewFlex := tview.NewFlex().SetDirection(tview.FlexRow).
+		AddItem(headerFlex, 0, 1, false).
+		AddItem(tview.NewFlex().SetDirection(tview.FlexColumn).
+			AddItem(hypervisorsList, 0, 1, true).
+			AddItem(detailsView, 0, 4, false),
+			0, 5, true)
+
 	volumeViewFlex := tview.NewFlex().SetDirection(tview.FlexRow).
 		AddItem(headerFlex, 0, 1, false).
 		AddItem(tview.NewFlex().SetDirection(tview.FlexColumn).
@@ -321,6 +342,7 @@ func main() {
 	pages.AddPage("servers", serverViewFlex, true, true)
 	pages.AddPage("images", imageViewFlex, true, true)
 	pages.AddPage("flavors", flavorViewFlex, true, true)
+	pages.AddPage("hypervisors", hypervisorsViewFlex, true, true)
 	pages.AddPage("volumes", volumeViewFlex, true, true)
 	pages.AddPage("loadbalancers", loadbalancerViewFlex, true, true)
 	pages.AddPage("dns", dnsViewFlex, true, true)
@@ -358,9 +380,13 @@ func populateServersList() {
 func populateAggregatesList() {
 	aggregatesList.Clear()
 	for _, aggregate := range aggregates.FetchAggregates() {
+		var hosts string
+		for _, host := range aggregate.Hosts {
+			hosts += fmt.Sprintf("\n\t%s", host)
+		}
 		aggregatesList.AddItem(aggregate.Name, "", -1, func() {
 			detailsView.Clear()
-			fmt.Fprintf(detailsView, "ID: %d\nName: %s\nMetadata: %s\nHosts: %s", aggregate.ID, aggregate.Name, aggregate.Metadata, aggregate.Hosts)
+			fmt.Fprintf(detailsView, "ID: %d\nName: %s\nMetadata: %s\nHosts: %s", aggregate.ID, aggregate.Name, aggregate.Metadata, hosts)
 		})
 	}
 }
@@ -381,6 +407,16 @@ func populateVolumesList() {
 		volumesList.AddItem(volume.Name, "", -1, func() {
 			detailsView.Clear()
 			fmt.Fprintf(detailsView, "\n\tID: %s\n\tName: %s\n\tDescription: %s\n\tCreated at: %s\n\tSize: %d\n\tType: %s", volume.ID, volume.Name, volume.Description, volume.CreatedAt, volume.Size, volume.VolumeType)
+		})
+	}
+}
+
+func populateHypervisorsList() {
+	hypervisorsList.Clear()
+	for _, hypervisor := range hypervisors.FetchHypervisors() {
+		hypervisorsList.AddItem(hypervisor.HypervisorHostname, "", -1, func() {
+			detailsView.Clear()
+			fmt.Fprintf(detailsView, "\n\tHostname: %s\n\tType: %s\n\tHost IP: %s\n\tState: %s\n\tCPU Info: %s", hypervisor.HypervisorHostname, hypervisor.HypervisorType, hypervisor.HostIP, hypervisor.State, hypervisor.CPUInfo)
 		})
 	}
 }

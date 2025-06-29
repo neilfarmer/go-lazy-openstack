@@ -5,7 +5,6 @@ go 1.24.1
 require (
 	github.com/gdamore/tcell/v2 v2.7.1
 	github.com/gophercloud/gophercloud v1.14.1
-	github.com/gophercloud/gophercloud/v2 v2.7.0
 	github.com/rivo/tview v0.0.0-20250330220935-949945f8d922
 )
 
