@@ -35,6 +35,9 @@ var volumesList *tview.List
 var loadbalancersList *tview.List
 var dnsList *tview.List
 
+var currentServer *servers.Server
+var currentView string
+
 var knownCommands = []string{
 	"servers",
 	"aggregates",
@@ -102,6 +105,10 @@ func main() {
 			case 'p':
 				pages.SwitchToPage("projects")
 				detailsView.Clear()
+			case 'x':
+				if currentView == "servers" && currentServer != nil {
+					go servers.SshToServer(*currentServer)
+				}
 			case 'q':
 				app.Stop()
 			default:
@@ -132,6 +139,9 @@ func main() {
 				_, _, width, _ := header.GetInnerRect()
 
 				shortcuts := "(a)ggregates (p)rojects (d)ns (i)mages (f)lavors (h)ypervisors (l)oadbalancers (s)ervers (n)etworks (v)olumes (q)uit"
+				if currentView == "servers" && currentServer != nil {
+					shortcuts += " (x)ssh"
+				}
 				text := fmt.Sprintf("%s%*s", shortcuts, width-len(shortcuts), now)
 				fmt.Fprintf(header, "%s", text)
 				fmt.Fprintf(header, "\n")
@@ -360,6 +370,9 @@ func populateServersList() {
 	for _, server := range servers.FetchServers() {
 		serverList.AddItem(server.Name, "", -1, func() {
 			detailsView.Clear()
+			currentServer = &s
+			currentView = "servers"
+
 			flavorID, _ := server.Flavor["id"].(string)
 			flavor := flavors.FetchFlavorByID(flavorID)
 			flavorInfo := fmt.Sprintf("\n\tName: %s, \n\tRAM: %dMB, \n\tvCPUs: %d, \n\tDisk: %dGB", flavor.Name, flavor.RAM, flavor.VCPUs, flavor.Disk)

@@ -3,6 +3,7 @@ package servers
 import (
 	"fmt"
 	"os"
+	"os/exec"
 
 	"github.com/gophercloud/gophercloud"
 	"github.com/gophercloud/gophercloud/openstack"
@@ -42,4 +43,18 @@ func FetchServers() []openstack_servers.Server {
 	}
 
 	return serverList
+}
+
+func SshToServer(server openstack_servers.Server) {
+	user := "test"
+	keyPath := "~/.ssh/test"
+	cmd := exec.Command("ssh", "-i", keyPath, fmt.Sprintf("%s@%s", user, server.AccessIPv4))
+	cmd.Stdin = os.Stdin
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+
+	err := cmd.Run()
+	if err != nil {
+		fmt.Println("SSH Failed: ", err)
+	}
 }
